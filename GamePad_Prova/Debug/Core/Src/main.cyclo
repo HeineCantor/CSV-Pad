@@ -1,0 +1,9 @@
+../Core/Src/main.c:100:6:HAL_GPIO_EXTI_Callback	9
+../Core/Src/main.c:183:5:main	1
+../Core/Src/main.c:251:6:SystemClock_Config	4
+../Core/Src/main.c:303:13:MX_ADC1_Init	5
+../Core/Src/main.c:378:13:MX_ADC3_Init	5
+../Core/Src/main.c:453:13:MX_I2C1_Init	4
+../Core/Src/main.c:499:13:MX_DMA_Init	1
+../Core/Src/main.c:521:13:MX_GPIO_Init	1
+../Core/Src/main.c:600:6:Error_Handler	1

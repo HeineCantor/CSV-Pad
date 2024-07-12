@@ -1,0 +1,18 @@
+!SESSION 2024-07-12 20:58:52.277 -----------------------------------------------
+eclipse.buildId=Version 1.16.0
+java.version=17.0.11
+java.vendor=Eclipse Adoptium
+BootLoader constants: OS=linux, ARCH=x86_64, WS=gtk, NL=en_US
+Command-line arguments:  -os linux -ws gtk -arch x86_64
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 4 4 2024-07-12 20:59:10.290
+!MESSAGE CubeMX plugin appears to be active, Log4j initialization might be too late.
+
+!ENTRY com.st.stm32cube.ide.mcu.informationcenter 1 1 2024-07-12 20:59:10.291
+!MESSAGE Log4j2 initialized with config file /home/heinecantor/Desktop/git/CSV-Pad/.metadata/.log4j2.xml
+
+!ENTRY com.st.stm32cube.ide.mcu.ide 1 1 2024-07-12 20:59:12.505
+!MESSAGE Started RMI Server, listening on port 41337
+
+!ENTRY org.eclipse.cdt.core 1 0 2024-07-12 20:59:39.347
+!MESSAGE Indexed 'GamePad_Prova' (34 sources, 128 headers) in 2.77 sec: 11,959 declarations; 65,291 references; 2 unresolved inclusions; 42 syntax errors; 147 unresolved names (0.19%)

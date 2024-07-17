@@ -13,7 +13,7 @@
 ../Core/Src/stm32f3xx_it.c:249:6:EXTI3_IRQHandler	8	static
 ../Core/Src/stm32f3xx_it.c:263:6:DMA1_Channel1_IRQHandler	8	static
 ../Core/Src/stm32f3xx_it.c:277:6:USB_LP_CAN_RX0_IRQHandler	8	static
-../Core/Src/stm32f3xx_it.c:291:6:DMA2_Channel5_IRQHandler	8	static
+../Core/Src/stm32f3xx_it.c:291:6:DMA2_Channel1_IRQHandler	8	static
 ../Core/Src/stm32f3xx_it.c:305:6:setBit	16	static
 ../Core/Src/stm32f3xx_it.c:310:6:clearBit	16	static
 ../Core/Src/stm32f3xx_it.c:315:6:toggleBit	16	static

@@ -47,9 +47,9 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
-ADC_HandleTypeDef hadc3;
+ADC_HandleTypeDef hadc2;
 DMA_HandleTypeDef hdma_adc1;
-DMA_HandleTypeDef hdma_adc3;
+DMA_HandleTypeDef hdma_adc2;
 
 I2C_HandleTypeDef hi2c1;
 
@@ -65,7 +65,7 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_ADC1_Init(void);
-static void MX_ADC3_Init(void);
+static void MX_ADC2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -76,102 +76,26 @@ static void MX_ADC3_Init(void);
 typedef struct {
 
 	uint8_t id;
-	uint8_t ax_x;
-	uint8_t ax_y;
-	uint8_t buttons;
+	uint8_t leftAxis[2];
+	uint8_t rightAxis[2];
+	uint16_t buttons;
 
 }Gamepad_hid_t;
 
 Gamepad_hid_t gamepad;
 
-static uint32_t VR[2];
+static uint32_t analogBuffer1[2], analogBuffer2[2];
 
-uint8_t mouseBuffer[4];
-
-uint8_t previous_pin_state_d0 = 0;
-uint8_t previous_pin_state_d1 = 0;
-uint8_t previous_pin_state_d2 = 0;
-uint8_t previous_pin_state_d3 = 0;
-uint8_t previous_pin_state_d4 = 0;
-uint8_t previous_pin_state_d5 = 0;
-uint8_t previous_pin_state_d6 = 0;
-uint8_t previous_pin_state_d7 = 0;
+uint8_t gamepadBuffer[7];
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 
-	uint8_t current_pin_state; // Sostituisci GPIOx con il tuo GPIO port
+	uint8_t current_pin_state = HAL_GPIO_ReadPin(GPIOD, GPIO_Pin);
 
-	if(GPIO_Pin == GPIO_PIN_0){
-
-		current_pin_state = HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_0);
-
-		// Verifica se c'è stato un cambiamento di stato
-		if (current_pin_state != previous_pin_state_d0) {
-			// Esegui il toggle del bit
-			toggleBit(&gamepad.buttons, 0);
-
-			// Aggiorna lo stato precedente
-			previous_pin_state_d0 = current_pin_state;
-		}
-
-	}else if(GPIO_Pin == GPIO_PIN_1){
-
-		current_pin_state = HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_1);
-
-		// Verifica se c'è stato un cambiamento di stato
-		if (current_pin_state != previous_pin_state_d1) {
-			// Esegui il toggle del bit
-			toggleBit(&gamepad.buttons, 1);
-
-			// Aggiorna lo stato precedente
-			previous_pin_state_d1 = current_pin_state;
-		}
-
-	}else if(GPIO_Pin == GPIO_PIN_2){
-
-		current_pin_state = HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_2);
-
-		// Verifica se c'è stato un cambiamento di stato
-		if (current_pin_state != previous_pin_state_d2) {
-			// Esegui il toggle del bit
-			toggleBit(&gamepad.buttons, 2);
-
-			// Aggiorna lo stato precedente
-			previous_pin_state_d2 = current_pin_state;
-		}
-
-	}else if(GPIO_Pin == GPIO_PIN_3){
-
-		current_pin_state = HAL_GPIO_ReadPin(GPIOD, GPIO_PIN_3);
-
-		// Verifica se c'è stato un cambiamento di stato
-		if (current_pin_state != previous_pin_state_d3) {
-			// Esegui il toggle del bit
-			toggleBit(&gamepad.buttons, 3);
-
-			// Aggiorna lo stato precedente
-			previous_pin_state_d3 = current_pin_state;
-		}
-
-	}else if(GPIO_Pin == GPIO_PIN_4){
-
-
-
-	}else if(GPIO_Pin == GPIO_PIN_5){
-
-
-
-	}else if(GPIO_Pin == GPIO_PIN_6){
-
-
-
-	}else if(GPIO_Pin == GPIO_PIN_7){
-
-
-
-	}
-
-
+	if (current_pin_state)
+		gamepad.buttons |= GPIO_Pin;
+	else
+		gamepad.buttons &= ~GPIO_Pin;
 }
 
 /* USER CODE END 0 */
@@ -209,15 +133,21 @@ int main(void)
   MX_I2C1_Init();
   MX_USB_DEVICE_Init();
   MX_ADC1_Init();
-  MX_ADC3_Init();
+  MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_ADC_Start_DMA(&hadc1, VR, 2); // start adc in dma mode for multichannel
+  HAL_ADC_Start_DMA(&hadc1, analogBuffer1, 2); // start adc in dma mode for multichannel
+  HAL_ADC_Start_DMA(&hadc2, analogBuffer2, 2); // start adc in dma mode for multichannel
 
   gamepad.id=1;
-  gamepad.ax_x=0;
-  gamepad.ax_y=0;
-  gamepad.buttons=0b00000000;
+
+  gamepad.leftAxis[0] = 0;
+  gamepad.leftAxis[1] = 0;
+
+  gamepad.rightAxis[0] = 0;
+  gamepad.rightAxis[1] = 0;
+
+  gamepad.buttons = 0;
 
   /* USER CODE END 2 */
 
@@ -229,15 +159,24 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  gamepad.ax_x = (VR[0]-2048)/16;
-	  gamepad.ax_y = (VR[1]-2048)/16;
+	  gamepad.leftAxis[0] = (analogBuffer1[0]-2048)/16;
+	  gamepad.leftAxis[1] = (analogBuffer1[1]-2048)/16;
 
-	  mouseBuffer[0] = gamepad.id; // id
-	  mouseBuffer[1] = gamepad.ax_x; // left movement (-1,1)
-	  mouseBuffer[2] = gamepad.ax_y; // right movement
-	  mouseBuffer[3] = gamepad.buttons; // buttons
+	  gamepad.rightAxis[0] = (analogBuffer2[0]-2048)/16;
+	  gamepad.rightAxis[1] = (analogBuffer2[1]-2048)/16;
 
-	  USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS,mouseBuffer, 4);
+	  gamepadBuffer[0] = gamepad.id; // id
+
+	  gamepadBuffer[1] = gamepad.leftAxis[0]; // left movement (-1,1)
+	  gamepadBuffer[2] = gamepad.leftAxis[1]; // right movement
+
+	  gamepadBuffer[3] = gamepad.rightAxis[0]; // left movement (-1,1)
+	  gamepadBuffer[4] = gamepad.rightAxis[1]; // right movement
+
+	  gamepadBuffer[5] = (uint8_t) (0x00FF & gamepad.buttons); // buttons
+	  gamepadBuffer[6] = (uint8_t) ((0xFF00 & gamepad.buttons) >> 8); // buttons
+
+	  USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, gamepadBuffer, 7);
 	  HAL_Delay(100);
 
   }
@@ -284,9 +223,8 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB|RCC_PERIPHCLK_I2C1
-                              |RCC_PERIPHCLK_ADC12|RCC_PERIPHCLK_ADC34;
+                              |RCC_PERIPHCLK_ADC12;
   PeriphClkInit.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV1;
-  PeriphClkInit.Adc34ClockSelection = RCC_ADC34PLLCLK_DIV1;
   PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
   PeriphClkInit.USBClockSelection = RCC_USBCLKSOURCE_PLL;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
@@ -371,77 +309,68 @@ static void MX_ADC1_Init(void)
 }
 
 /**
-  * @brief ADC3 Initialization Function
+  * @brief ADC2 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_ADC3_Init(void)
+static void MX_ADC2_Init(void)
 {
 
-  /* USER CODE BEGIN ADC3_Init 0 */
+  /* USER CODE BEGIN ADC2_Init 0 */
 
-  /* USER CODE END ADC3_Init 0 */
+  /* USER CODE END ADC2_Init 0 */
 
-  ADC_MultiModeTypeDef multimode = {0};
   ADC_ChannelConfTypeDef sConfig = {0};
 
-  /* USER CODE BEGIN ADC3_Init 1 */
+  /* USER CODE BEGIN ADC2_Init 1 */
 
-  /* USER CODE END ADC3_Init 1 */
+  /* USER CODE END ADC2_Init 1 */
 
   /** Common config
   */
-  hadc3.Instance = ADC3;
-  hadc3.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
-  hadc3.Init.Resolution = ADC_RESOLUTION_12B;
-  hadc3.Init.ScanConvMode = ADC_SCAN_ENABLE;
-  hadc3.Init.ContinuousConvMode = ENABLE;
-  hadc3.Init.DiscontinuousConvMode = DISABLE;
-  hadc3.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
-  hadc3.Init.ExternalTrigConv = ADC_SOFTWARE_START;
-  hadc3.Init.DataAlign = ADC_DATAALIGN_RIGHT;
-  hadc3.Init.NbrOfConversion = 2;
-  hadc3.Init.DMAContinuousRequests = ENABLE;
-  hadc3.Init.EOCSelection = ADC_EOC_SEQ_CONV;
-  hadc3.Init.LowPowerAutoWait = DISABLE;
-  hadc3.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
-  if (HAL_ADC_Init(&hadc3) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** Configure the ADC multi-mode
-  */
-  multimode.Mode = ADC_MODE_INDEPENDENT;
-  if (HAL_ADCEx_MultiModeConfigChannel(&hadc3, &multimode) != HAL_OK)
+  hadc2.Instance = ADC2;
+  hadc2.Init.ClockPrescaler = ADC_CLOCK_ASYNC_DIV1;
+  hadc2.Init.Resolution = ADC_RESOLUTION_12B;
+  hadc2.Init.ScanConvMode = ADC_SCAN_ENABLE;
+  hadc2.Init.ContinuousConvMode = ENABLE;
+  hadc2.Init.DiscontinuousConvMode = DISABLE;
+  hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc2.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc2.Init.NbrOfConversion = 2;
+  hadc2.Init.DMAContinuousRequests = ENABLE;
+  hadc2.Init.EOCSelection = ADC_EOC_SEQ_CONV;
+  hadc2.Init.LowPowerAutoWait = DISABLE;
+  hadc2.Init.Overrun = ADC_OVR_DATA_OVERWRITTEN;
+  if (HAL_ADC_Init(&hadc2) != HAL_OK)
   {
     Error_Handler();
   }
 
   /** Configure Regular Channel
   */
-  sConfig.Channel = ADC_CHANNEL_1;
+  sConfig.Channel = ADC_CHANNEL_5;
   sConfig.Rank = ADC_REGULAR_RANK_1;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.SamplingTime = ADC_SAMPLETIME_601CYCLES_5;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
-  if (HAL_ADC_ConfigChannel(&hadc3, &sConfig) != HAL_OK)
+  if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
   {
     Error_Handler();
   }
 
   /** Configure Regular Channel
   */
-  sConfig.Channel = ADC_CHANNEL_2;
+  sConfig.Channel = ADC_CHANNEL_6;
   sConfig.Rank = ADC_REGULAR_RANK_2;
-  if (HAL_ADC_ConfigChannel(&hadc3, &sConfig) != HAL_OK)
+  if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN ADC3_Init 2 */
+  /* USER CODE BEGIN ADC2_Init 2 */
 
-  /* USER CODE END ADC3_Init 2 */
+  /* USER CODE END ADC2_Init 2 */
 
 }
 
@@ -507,9 +436,9 @@ static void MX_DMA_Init(void)
   /* DMA1_Channel1_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
-  /* DMA2_Channel5_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Channel5_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Channel5_IRQn);
+  /* DMA2_Channel1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Channel1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Channel1_IRQn);
 
 }
 
@@ -529,8 +458,8 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOE, CS_I2C_SPI_Pin|LD4_Pin|LD7_Pin|LD9_Pin
@@ -551,12 +480,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(MEMS_INT4_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PA5 */
-  GPIO_InitStruct.Pin = GPIO_PIN_5;
-  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
   /*Configure GPIO pins : SPI1_MISO_Pin SPI1_MISOA7_Pin */
   GPIO_InitStruct.Pin = SPI1_MISO_Pin|SPI1_MISOA7_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -568,6 +491,12 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pins : PD0 PD1 PD2 PD3 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PD4 */
+  GPIO_InitStruct.Pin = GPIO_PIN_4;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 

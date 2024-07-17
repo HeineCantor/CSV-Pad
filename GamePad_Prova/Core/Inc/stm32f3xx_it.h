@@ -61,7 +61,7 @@ void EXTI2_TSC_IRQHandler(void);
 void EXTI3_IRQHandler(void);
 void DMA1_Channel1_IRQHandler(void);
 void USB_LP_CAN_RX0_IRQHandler(void);
-void DMA2_Channel5_IRQHandler(void);
+void DMA2_Channel1_IRQHandler(void);
 /* USER CODE BEGIN EFP */
 
 //Functions to handle each bits in a single byte

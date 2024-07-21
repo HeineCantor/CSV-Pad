@@ -85,12 +85,14 @@ typedef struct {
 Gamepad_hid_t gamepad;
 
 static uint32_t analogBuffer1[2], analogBuffer2[2];
+static uint16_t GPIO_MASK = 0x0500; // 0000 0101 0000 0000
 
 uint8_t gamepadBuffer[7];
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
 
 	uint8_t current_pin_state = HAL_GPIO_ReadPin(GPIOD, GPIO_Pin);
+
 
 	if (current_pin_state)
 		gamepad.buttons |= GPIO_Pin;
@@ -147,7 +149,7 @@ int main(void)
   gamepad.rightAxis[0] = 0;
   gamepad.rightAxis[1] = 0;
 
-  gamepad.buttons = 0;
+  gamepad.buttons = GPIO_MASK;
 
   /* USER CODE END 2 */
 
@@ -173,8 +175,10 @@ int main(void)
 	  gamepadBuffer[3] = gamepad.rightAxis[0]; // left movement (-1,1)
 	  gamepadBuffer[4] = gamepad.rightAxis[1]; // right movement
 
-	  gamepadBuffer[5] = (uint8_t) (0x00FF & gamepad.buttons); // buttons
-	  gamepadBuffer[6] = (uint8_t) ((0xFF00 & gamepad.buttons) >> 8); // buttons
+	  uint16_t buttonsWord = gamepad.buttons ^ GPIO_MASK;
+
+	  gamepadBuffer[5] = (uint8_t) (0x00FF & buttonsWord); // buttons
+	  gamepadBuffer[6] = (uint8_t) ((0xFF00 & buttonsWord) >> 8); // buttons
 
 	  USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS, gamepadBuffer, 7);
 	  HAL_Delay(100);
@@ -474,12 +478,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : MEMS_INT4_Pin */
-  GPIO_InitStruct.Pin = MEMS_INT4_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_EVT_RISING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(MEMS_INT4_GPIO_Port, &GPIO_InitStruct);
-
   /*Configure GPIO pins : SPI1_MISO_Pin SPI1_MISOA7_Pin */
   GPIO_InitStruct.Pin = SPI1_MISO_Pin|SPI1_MISOA7_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
@@ -488,15 +486,15 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF5_SPI1;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PD0 PD1 PD2 PD3 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3;
+  /*Configure GPIO pins : PD8 PD9 PD10 PD11
+                           PD12 PD13 PD14 PD15
+                           PD0 PD1 PD2 PD3
+                           PD4 PD5 PD6 PD7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
+                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15
+                          |GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3
+                          |GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PD4 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
@@ -512,6 +510,15 @@ static void MX_GPIO_Init(void)
 
   HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI3_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */

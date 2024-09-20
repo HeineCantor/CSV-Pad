@@ -1,4 +1,5 @@
 # CSV-Pad
+![Banner CSV-Pad](https://github.com/vlb20/CSV-Pad/blob/56b27f6e2d4704a4086066d391a0f26f1b4e049f/Immagini/CSV%20GAMEPAD.png)
 
 ## Authors
 - [**C**armine Palmese](https://github.com/HeineCantor)
@@ -26,3 +27,5 @@ Hardware and software configurations can be found within the powerpoint in the r
 - Home Device Control: Using the gamepad to control smart home devices like lights, locks, and entertainment systems.
 - New Device Development: Creating new input devices for various applications, leveraging the HID protocol’s flexibility.
 - **Gaming**: And, of course, for gaming!
+
+![Scheda](https://github.com/vlb20/CSV-Pad/blob/56b27f6e2d4704a4086066d391a0f26f1b4e049f/Immagini/csvimm.png)

@@ -4,7 +4,7 @@
 ## Authors
 - [**C**armine Palmese](https://github.com/HeineCantor)
 - [**S**alvatore Cangiano](https://github.com/Salvr28)
-- **V**incenzo Luigi Bruno
+- [**V**incenzo Luigi Bruno](https://github.com/vlb20)
 
 ## Project Description
 
